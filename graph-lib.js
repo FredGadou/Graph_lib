@@ -186,11 +186,11 @@ class Graph {
                         this.ctx.font = `${this.setting.axis_value.size}px ${this.setting.axis_value.font}`; 
                         if(i%2 === 0) {
                             if(this.setting.axis_value.x_val_rotate) {
-                                this.ctx.translate(x_pos - 10, this.height - (this.margin.down - 15));
+                                this.ctx.translate(x_pos - 10, this.height - (this.margin.down - 20));
                                 this.ctx.rotate(Math.PI/-5);
                                 this.ctx.fillText(data[i][0], 0, 0);
                                 this.ctx.rotate(Math.PI/5)
-                                this.ctx.translate(-(x_pos - 10),-(this.height - (this.margin.down + 5)));
+                                this.ctx.translate(-(x_pos - 10),-(this.height - (this.margin.down + 20)));
                             } else {
                                 this.ctx.fillText(data[i][0], x_pos, this.height - (this.margin.down - 15));
                             }
