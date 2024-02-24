@@ -5,8 +5,10 @@
 /*
 
 let graph = new Graph('graph_test',900,600,'linechart');
-
-graph.draw([[0,15],[1,10],[2,12],[3,14],[4,20],[5,35],[6,49],[7,70],[8,112],[9,120]]);
+graph.setting.axis_value.y_val_step = 50;
+graph.setting.title.presence = true;
+graph.setting.title.content = 'Graph Test'; 
+graph.draw([[0,15],[1,10],[2,12],[3,14],[4,20],[5,35],[6,49],[7,70],[8,112],[9,200],[10,400]]);
 
 graph.draw([[0,1.5],[1,1],[2,1.2],[3,1.4],[4,2.0],[5,3.5],[6,4.9],[7,7.0],[8,8],[9,9]]);
 
@@ -24,7 +26,7 @@ class Graph {
         this.margin = {
             top:10,
             down:20,
-            left:10,
+            left:30,
             right:10
         }
         this.setting = {
@@ -34,6 +36,18 @@ class Graph {
             graphLineWidth : 4,
             lineLabelSize : 8,
             lineLabelFont : 'sans-serif',
+            dots : {
+                presence : true,
+                size : 4,
+            },
+            axis_value : {
+                x_val_presence : true,
+                x_val_rotate : false,
+                y_val_presence : true,
+                y_val_step : 10,
+                font : 'sans-serif',
+                size : 8
+            },
             title : {
                 presence: false,
                 font: 'sans-serif',
@@ -82,15 +96,15 @@ class Graph {
         }
 
 
-        // max_y must be divisible by 10 if over 20
+        // max_y must be divisible by this.setting.axis_value.y_val_step if over 20
         if(max_y > 20) {
 
             //give 1% space top
             max_y = Math.round(max_y * 1.1);
-            while(max_y % 10 != 0) {
+            while(max_y % this.setting.axis_value.y_val_step != 0) {
                 max_y++;
             }
-            y_line_count = max_y/10;
+            y_line_count = max_y/this.setting.axis_value.y_val_step;
 
         } else {
             max_y++;
@@ -114,13 +128,13 @@ class Graph {
 
 
         
-        /******************  Drawing start here  ******************/
+        /******************  Drawing starts here  ******************/
 
         //Title
         if(this.setting.title.presence) {
             this.ctx.font = `${this.setting.title.size}px ${this.setting.title.font}`;
             this.ctx.fillText(`${this.setting.title.content}`, (this.width/2) - (this.margin.left+this.margin.right + (this.setting.title.content.length*(this.setting.title.size/5))), this.margin.top + (this.margin.top * 1.5));
-            this.margin.top = 30
+            this.margin.top = 30;
         }
 
         
@@ -137,8 +151,10 @@ class Graph {
             this.ctx.moveTo(x_start,y_line_pos);
             this.ctx.lineTo(x_end,y_line_pos);
             this.ctx.stroke();
-            this.ctx.font = `${this.setting.lineLabelSize}px ${this.setting.lineLabelFont}`; 
-            this.ctx.fillText(y_text_line, x_start + 4, y_line_pos - 4); //line data
+            if(this.setting.axis_value.y_val_presence) {
+                this.ctx.font = `${this.setting.axis_value.size}px ${this.setting.axis_value.font}`; 
+                this.ctx.fillText(y_text_line, x_start - 20 , y_line_pos); //line data
+            }
             y_text_line += max_y / y_line_count;
             y_line_pos -= y_step_back_line;
         }
@@ -153,44 +169,60 @@ class Graph {
 
             case 'linechart':
 
-                let x_step = (this.width - (this.margin.left + this.margin.right)) / (data.length+1);
-                let x_pos = x_step;
+                let x_step = (this.width - (this.margin.left+this.margin.right)) / (data.length);
+                let x_pos = this.margin.left;
                 let y_pos;
                 
+                this.ctx.beginPath();
                 this.ctx.lineWidth = this.setting.graphLineWidth;
                 this.ctx.strokeStyle = this.setting.graphLineColor;
-                this.ctx.beginPath();
 
                 for(let i = 0; i < data.length; i++) {
-                
-                    x_pos += x_step;
                     y_pos = ((this.height - (this.margin.top + this.margin.down))-(data[i][1] * ratio_y)) + this.margin.top;
                     
                     
                     //Writting x axis grid range
-                    if(i%2 === 0) {
-                        this.ctx.translate(x_pos - 10, this.height - (this.margin.down + 5));
-                        this.ctx.rotate(Math.PI/-5);
-                        this.ctx.fillText(data[i][0], 0, 0);
-                        this.ctx.rotate(Math.PI/5)
-                        this.ctx.translate(-(x_pos - 10),-(this.height - (this.margin.down + 5)));
+                    if(this.setting.axis_value.x_val_presence) {
+                        this.ctx.font = `${this.setting.axis_value.size}px ${this.setting.axis_value.font}`; 
+                        if(i%2 === 0) {
+                            if(this.setting.axis_value.x_val_rotate) {
+                                this.ctx.translate(x_pos - 10, this.height - (this.margin.down - 15));
+                                this.ctx.rotate(Math.PI/-5);
+                                this.ctx.fillText(data[i][0], 0, 0);
+                                this.ctx.rotate(Math.PI/5)
+                                this.ctx.translate(-(x_pos - 10),-(this.height - (this.margin.down + 5)));
+                            } else {
+                                this.ctx.fillText(data[i][0], x_pos, this.height - (this.margin.down - 15));
+                            }
+                        }
                     }
 
                     if(i === 0) {
                         
                         this.ctx.moveTo(x_pos, y_pos);
 
-                    } else if (i > 0 && i < data.length - 1) {
+                    } else if (i > 0 ) {
 
                         this.ctx.lineTo(x_pos, y_pos);
 
-                    } else {
-                        this.ctx.lineTo(x_pos, y_pos);
-                        this.ctx.stroke();
                     }
-                
+                    x_pos += x_step;
                 }
-                
+                this.ctx.stroke()
+
+                // drawing dots
+                if(this.setting.dots.presence) {
+                    x_step = (this.width - (this.margin.left + this.margin.right)) / (data.length);
+                    x_pos = this.margin.left;
+                    for(let i = 0; i < data.length; i++) {
+                        y_pos = ((this.height - (this.margin.top + this.margin.down))-(data[i][1] * ratio_y)) + this.margin.top;
+                        this.ctx.beginPath();
+                        this.ctx.arc(x_pos, y_pos, this.setting.dots.size/2, 0, 2 * Math.PI);
+                        this.ctx.stroke();
+                        this.ctx.fill();
+                        x_pos += x_step;
+                    }
+                }
 
                 break;
             
